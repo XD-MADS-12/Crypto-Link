@@ -1,3 +1,4 @@
+// app/admin-secret-key/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -7,12 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { AlertTriangle, CheckCircle, XCircle, Users, DollarSign, Eye, Clock, Activity, Loader2 } from 'lucide-react'
+import { AlertTriangle, CheckCircle, XCircle, Users, DollarSign, Eye, Clock, Activity, Shield } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
-export default function AdminPage() {
+export default function AdminSecretPage() {
   const [users, setUsers] = useState<any[]>([])
   const [payments, setPayments] = useState<any[]>([])
   const [clickLogs, setClickLogs] = useState<any[]>([])
@@ -24,24 +25,52 @@ export default function AdminPage() {
   })
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [accessGranted, setAccessGranted] = useState(false)
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
   const router = useRouter()
 
   useEffect(() => {
+    // Check if user has admin access
     const session = localStorage.getItem('userSession')
-    if (!session) {
-      router.push('/auth/login')
-      return
+    if (session) {
+      const userData = JSON.parse(session)
+      if (userData.role === 'admin') {
+        setUser(userData)
+        setAccessGranted(true)
+        fetchData()
+      }
     }
-    
-    const userData = JSON.parse(session)
-    if (userData.role !== 'admin') {
-      router.push('/dashboard')
-      return
+  }, [])
+
+  const handleAccess = async () => {
+    if (password === 'CRYPTO_ADMIN_2024') {
+      // Verify admin credentials
+      const { data, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('email', 'unkn0wn471k@yahoo.com')
+        .single()
+      
+      if (error || data?.role !== 'admin') {
+        setError('Invalid admin credentials')
+        return
+      }
+      
+      // Grant access
+      setAccessGranted(true)
+      setUser({ email: 'unkn0wn471k@yahoo.com', role: 'admin' })
+      localStorage.setItem('userSession', JSON.stringify({
+        email: 'unkn0wn471k@yahoo.com',
+        role: 'admin'
+      }))
+      
+      // Fetch data
+      fetchData()
+    } else {
+      setError('Invalid access code')
     }
-    
-    setUser(userData)
-    fetchData()
-  }, [router])
+  }
 
   const fetchData = async () => {
     setIsLoading(true)
@@ -82,7 +111,7 @@ export default function AdminPage() {
         totalClicks: clickLogsData?.length || 0
       })
     } catch (error) {
-      console.error('Error fetching admin ', error)
+      console.error('Error fetching admin data', error)
     } finally {
       setIsLoading(false)
     }
@@ -137,6 +166,46 @@ export default function AdminPage() {
     }
   }
 
+  if (!accessGranted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-purple-800/30"
+        >
+          <div className="text-center mb-6">
+            <Shield className="w-12 h-12 text-purple-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white">Admin Access Required</h2>
+            <p className="text-gray-400 mt-2">Enter admin access code to continue</p>
+          </div>
+          
+          {error && (
+            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-300">
+              {error}
+            </div>
+          )}
+          
+          <div className="space-y-4">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter access code"
+              className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white"
+            />
+            <Button 
+              onClick={handleAccess}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2"
+            >
+              Access Admin Panel
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+    )
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
@@ -157,9 +226,13 @@ export default function AdminPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
-          <p className="text-gray-400 mt-2">
-            Manage users, payments, and system settings
+          <h1 className="text-3xl font-bold text-white flex items-center">
+            <Shield className="w-8 h-8 text-purple-400 mr-3" />
+            Admin Dashboard
+          </h1>
+          <p className="text-gray-400 mt-2 flex items-center">
+            <Activity className="w-4 h-4 mr-2" />
+            Admin Mode Active
           </p>
         </motion.div>
 
