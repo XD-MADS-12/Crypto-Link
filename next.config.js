@@ -1,4 +1,3 @@
-/ next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
@@ -6,11 +5,6 @@ const nextConfig = {
   },
   images: {
     domains: ['placehold.co'],
-  },
-  env: {
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    ADMIN_TOKEN: process.env.ADMIN_TOKEN,
   },
 }
 
