@@ -1,7 +1,7 @@
 // components/header.tsx
 import { Button } from './ui/button'
 import { useRouter } from 'next/navigation'
-import { Zap, User, Shield } from 'lucide-react'
+import { Zap, User } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export function Header({ user }: { user: any }) {
@@ -50,15 +50,6 @@ export function Header({ user }: { user: any }) {
             >
               Dashboard
             </motion.a>
-            {user?.role === 'admin' && (
-              <motion.a 
-                href="/admin" 
-                className="text-sm font-medium text-gray-300 hover:text-purple-400 transition-colors flex items-center"
-                whileHover={{ y: -2 }}
-              >
-                <Shield className="w-4 h-4 mr-1" /> Admin Panel
-              </motion.a>
-            )}
           </nav>
 
           <div className="flex items-center space-x-4">
