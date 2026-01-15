@@ -1,3 +1,4 @@
+// components/header.tsx
 import { Button } from './ui/button'
 import { useRouter } from 'next/navigation'
 import { Zap, User, Shield } from 'lucide-react'
@@ -18,9 +19,19 @@ export function Header({ user }: { user: any }) {
             className="flex items-center space-x-2"
             whileHover={{ scale: 1.05 }}
           >
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
+            {/* New Logo SVG */}
+            <svg width="32" height="32" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#8B5CF6" />
+                  <stop offset="100%" stop-color="#EC4899" />
+                </linearGradient>
+              </defs>
+              <circle cx="20" cy="20" r="20" fill="url(#logoGradient)" />
+              <path d="M12 15 L18 18 L12 21 L6 18 Z" fill="white" />
+              <path d="M18 15 L24 18 L18 21 L12 18 Z" fill="white" />
+              <path d="M22 12 L24 16 L20 16 L22 20 L18 16 L22 12 Z" fill="white" />
+            </svg>
             <span className="text-xl font-bold text-white">CryptoLink</span>
           </motion.div>
           
@@ -77,4 +88,4 @@ export function Header({ user }: { user: any }) {
       </div>
     </motion.header>
   )
-            }
+}
