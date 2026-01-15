@@ -6,7 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { AlertTriangle, CheckCircle, XCircle, Users, DollarSign, Eye, Clock, Activity } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { AlertTriangle, CheckCircle, XCircle, Users, DollarSign, Eye, Clock, Activity, Loader2 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { motion } from 'framer-motion'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 export default function AdminPage() {
   const [users, setUsers] = useState<any[]>([])
@@ -19,6 +23,7 @@ export default function AdminPage() {
     totalClicks: 0
   })
   const [user, setUser] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
@@ -35,42 +40,64 @@ export default function AdminPage() {
     }
     
     setUser(userData)
-    
-    // In a real app, fetch data from API
-    // For demo purposes, we'll use mock data
-    const mockUsers = [
-      { id: 1, email: 'admin@cryptolink.com', role: 'admin', status: 'active', subscription: 'active', createdAt: '2024-01-14' },
-      { id: 2, email: 'user@example.com', role: 'user', status: 'active', subscription: 'free', createdAt: '2024-01-14' },
-      { id: 3, email: 'premium@example.com', role: 'user', status: 'active', subscription: 'premium', createdAt: '2024-01-14' }
-    ]
-    
-    const mockPayments = [
-      { id: 1, userId: 2, plan: 'premium-monthly', cryptoType: 'USDT', txid: '0xabc123456789abcdef123456789abcdef123456789abcdef123456789abcdef1', amount: 10, status: 'pending', createdAt: '2024-01-14T10:30:00Z' },
-      { id: 2, userId: 3, plan: 'premium-yearly', cryptoType: 'BNB', txid: '0xdef987654321fedcba987654321fedcba987654321fedcba987654321fedc', amount: 100, status: 'active', createdAt: '2024-01-14T09:15:00Z' }
-    ]
-    
-    const mockClickLogs = [
-      { id: 1, urlId: 1, ipHash: 'abc123', userAgent: 'Mozilla/5.0...', isValid: true, createdAt: '2024-01-14T11:00:00Z' },
-      { id: 2, urlId: 1, ipHash: 'def456', userAgent: 'Bot/1.0', isValid: false, createdAt: '2024-01-14T10:45:00Z' }
-    ]
-    
-    setUsers(mockUsers)
-    setPayments(mockPayments)
-    setClickLogs(mockClickLogs)
-    
-    setUserStats({
-      totalUsers: mockUsers.length,
-      activeSubscriptions: mockPayments.filter(p => p.status === 'active').length,
-      pendingPayments: mockPayments.filter(p => p.status === 'pending').length,
-      totalClicks: mockClickLogs.length
-    })
+    fetchData()
   }, [router])
 
-  const updatePaymentStatus = async (paymentId: number, status: string) => {
+  const fetchData = async () => {
+    setIsLoading(true)
+    
     try {
-      // In a real app, this would be an API call to your backend
-      console.log(`Updating payment ${paymentId} to ${status}`)
+      // Fetch users
+      const {  usersData, error: usersError } = await supabase
+        .from('users')
+        .select('*')
       
+      if (usersError) throw usersError
+      
+      // Fetch payments
+      const {  paymentsData, error: paymentsError } = await supabase
+        .from('payments')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (paymentsError) throw paymentsError
+      
+      // Fetch click logs
+      const {  clickLogsData, error: clickLogsError } = await supabase
+        .from('click_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (clickLogsError) throw clickLogsError
+      
+      setUsers(usersData || [])
+      setPayments(paymentsData || [])
+      setClickLogs(clickLogsData || [])
+      
+      // Calculate stats
+      setUserStats({
+        totalUsers: usersData?.length || 0,
+        activeSubscriptions: paymentsData?.filter((p: any) => p.status === 'active').length || 0,
+        pendingPayments: paymentsData?.filter((p: any) => p.status === 'pending').length || 0,
+        totalClicks: clickLogsData?.length || 0
+      })
+    } catch (error) {
+      console.error('Error fetching admin ', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const updatePaymentStatus = async (paymentId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('payments')
+        .update({ status })
+        .eq('id', paymentId)
+      
+      if (error) throw error
+      
+      // Update local state
       setPayments(prev => prev.map(p => 
         p.id === paymentId ? { ...p, status } : p
       ))
@@ -93,10 +120,14 @@ export default function AdminPage() {
     }
   }
 
-  const updateUserStatus = async (userId: number, status: string) => {
+  const updateUserStatus = async (userId: string, status: string) => {
     try {
-      // In a real app, this would be an API call to your backend
-      console.log(`Updating user ${userId} to ${status}`)
+      const { error } = await supabase
+        .from('users')
+        .update({ status })
+        .eq('id', userId)
+      
+      if (error) throw error
       
       setUsers(prev => prev.map(u => 
         u.id === userId ? { ...u, status } : u
@@ -106,50 +137,39 @@ export default function AdminPage() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <LoadingSpinner />
+          <p className="text-white mt-4">Loading admin panel...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Header */}
-      <header className="border-b border-purple-800/30 backdrop-blur-sm bg-black/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                <Activity className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white">Admin Dashboard</span>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-red-400 flex items-center">
-                <Activity className="w-4 h-4 mr-1" />
-                Admin Mode Active
-              </span>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  localStorage.removeItem('userSession')
-                  router.push('/')
-                }}
-              >
-                Logout
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
           <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
           <p className="text-gray-400 mt-2">
             Manage users, payments, and system settings
           </p>
-        </div>
+        </motion.div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
           <Card className="bg-white/5 backdrop-blur-sm border border-purple-800/30">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -197,10 +217,15 @@ export default function AdminPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
 
         {/* Pending Payments */}
-        <div className="mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mb-8"
+        >
           <Card className="bg-white/5 backdrop-blur-sm border border-purple-800/30">
             <CardHeader>
               <CardTitle className="text-xl text-white flex items-center">
@@ -223,16 +248,21 @@ export default function AdminPage() {
                 </TableHeader>
                 <TableBody>
                   {payments.filter(p => p.status === 'pending').map((payment) => (
-                    <TableRow key={payment.id}>
-                      <TableCell className="text-gray-300">{payment.userId}</TableCell>
+                    <motion.tr
+                      key={payment.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <TableCell className="text-gray-300">{payment.user_id}</TableCell>
                       <TableCell className="text-gray-300 capitalize">{payment.plan.replace('-', ' ')}</TableCell>
-                      <TableCell className="text-gray-300">{payment.cryptoType}</TableCell>
+                      <TableCell className="text-gray-300">{payment.crypto_type}</TableCell>
                       <TableCell className="text-gray-300">${payment.amount}</TableCell>
                       <TableCell className="text-gray-400 font-mono text-xs max-w-xs truncate">
                         {payment.txid.substring(0, 20)}...
                       </TableCell>
                       <TableCell className="text-gray-400">
-                        {new Date(payment.createdAt).toLocaleDateString()}
+                        {new Date(payment.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
@@ -254,16 +284,21 @@ export default function AdminPage() {
                           </Button>
                         </div>
                       </TableCell>
-                    </TableRow>
+                    </motion.tr>
                   ))}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
 
         {/* Users Management */}
-        <div className="mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="mb-8"
+        >
           <Card className="bg-white/5 backdrop-blur-sm border border-purple-800/30">
             <CardHeader>
               <CardTitle className="text-xl text-white flex items-center">
@@ -285,7 +320,12 @@ export default function AdminPage() {
                 </TableHeader>
                 <TableBody>
                   {users.map((user) => (
-                    <TableRow key={user.id}>
+                    <motion.tr
+                      key={user.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
                       <TableCell className="text-gray-300">{user.email}</TableCell>
                       <TableCell>
                         <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
@@ -293,27 +333,31 @@ export default function AdminPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <select
+                        <Select
                           value={user.status}
-                          onChange={(e) => updateUserStatus(user.id, e.target.value)}
-                          className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white"
+                          onValueChange={(value) => updateUserStatus(user.id, value)}
                         >
-                          <option value="active">active</option>
-                          <option value="inactive">inactive</option>
-                          <option value="blocked">blocked</option>
-                        </select>
+                          <SelectTrigger className="w-32 bg-gray-800 border-gray-700 text-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-gray-800 border-gray-700">
+                            <SelectItem value="active">active</SelectItem>
+                            <SelectItem value="inactive">inactive</SelectItem>
+                            <SelectItem value="blocked">blocked</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell>
                         <Badge variant={
-                          user.subscription === 'free' ? 'secondary' : 
-                          user.subscription === 'premium' ? 'default' : 
+                          user.subscription_status === 'free' ? 'secondary' : 
+                          user.subscription_status === 'active' ? 'default' : 
                           'outline'
                         }>
-                          {user.subscription}
+                          {user.subscription_status}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-gray-400">
-                        {new Date(user.createdAt).toLocaleDateString()}
+                        {new Date(user.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         <Button 
@@ -324,16 +368,20 @@ export default function AdminPage() {
                           {user.status === 'active' ? 'Block' : 'Unblock'}
                         </Button>
                       </TableCell>
-                    </TableRow>
+                    </motion.tr>
                   ))}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
 
         {/* Suspicious Activity */}
-        <div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+        >
           <Card className="bg-white/5 backdrop-blur-sm border border-purple-800/30">
             <CardHeader>
               <CardTitle className="text-xl text-white flex items-center">
@@ -353,27 +401,33 @@ export default function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {clickLogs.filter(log => !log.isValid).map((log) => (
-                    <TableRow key={log.id} className="bg-red-500/10">
-                      <TableCell className="text-red-400">{log.urlId}</TableCell>
-                      <TableCell className="text-red-400">{log.ipHash}</TableCell>
+                  {clickLogs.filter(log => !log.is_valid).map((log) => (
+                    <motion.tr
+                      key={log.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className="bg-red-500/10"
+                    >
+                      <TableCell className="text-red-400">{log.url_id}</TableCell>
+                      <TableCell className="text-red-400">{log.ip_hash}</TableCell>
                       <TableCell className="text-red-400 text-xs max-w-xs truncate">
-                        {log.userAgent}
+                        {log.user_agent}
                       </TableCell>
                       <TableCell>
                         <Badge variant="destructive">Invalid</Badge>
                       </TableCell>
                       <TableCell className="text-gray-400">
-                        {new Date(log.createdAt).toLocaleString()}
+                        {new Date(log.created_at).toLocaleString()}
                       </TableCell>
-                    </TableRow>
+                    </motion.tr>
                   ))}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
       </main>
     </div>
   )
-    }
+}
