@@ -1,6 +1,6 @@
 // app/api/url/analytics/route.ts
 import { NextRequest } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '../lib/supabase'
 
 export async function GET(req: NextRequest) {
   try {
