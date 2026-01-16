@@ -1,8 +1,8 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { Button } from '../components/ui/button'
+import { Card } from '../components/ui/card'
 import { CheckCircle, Shield, Coins, TrendingUp, Zap, Lock } from 'lucide-react'
 
 export default function HomePage() {
