@@ -3,15 +3,15 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '../components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
+import { Button } from '../../components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table'
 import { Badge } from '../components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { AlertTriangle, CheckCircle, XCircle, Users, DollarSign, Eye, Clock, Activity, Shield } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 import { motion } from 'framer-motion'
-import { LoadingSpinner } from '../components/ui/loading-spinner'
+import { LoadingSpinner } from '../../components/ui/loading-spinner'
 
 export default function AdminSecretPage() {
   const [users, setUsers] = useState<any[]>([])
