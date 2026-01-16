@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Button } from '../components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Input } from '../components/ui/input'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog'
 import { Copy, ExternalLink, Plus, BarChart3, Coins, Clock, AlertTriangle, Loader2 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '../lib/supabase'
 import { motion } from 'framer-motion'
-import { PaymentAnimation } from '@/components/ui/payment-animation'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { PaymentAnimation } from '../components/ui/payment-animation'
+import { LoadingSpinner } from '../components/ui/loading-spinner'
 
 export default function DashboardPage() {
   const [urls, setUrls] = useState<any[]>([])
