@@ -1,7 +1,7 @@
 // app/api/payments/verify/route.ts
 import { NextRequest } from 'next/server'
-import { supabase } from '@/lib/supabase'
-import { CryptoVerifier } from '@/lib/crypto-verifier'
+import { supabase } from '../lib/supabase'
+import { CryptoVerifier } from '../lib/crypto-verifier'
 
 export async function POST(req: NextRequest) {
   try {
