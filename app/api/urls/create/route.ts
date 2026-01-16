@@ -1,6 +1,6 @@
 // app/api/urls/create/route.ts
 import { NextRequest } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '../lib/supabase'
 import { nanoid } from 'nanoid'
 
 export async function POST(req: NextRequest) {
